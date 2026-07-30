@@ -1,5 +1,4 @@
-import type { Blueprint } from './types';
-import type { BuilderStep } from './types';
+import type { Blueprint, BuilderStep } from '../types';
 
 const stepOrder: BuilderStep[] = [
   'basics', 'platforms', 'frontend', 'backend',
@@ -18,14 +17,17 @@ export default function ProgressBar({ bp, current }: { bp: Blueprint; current: B
   const pct = Math.round((filled / total) * 100);
 
   return (
-    <div class="mb-6">
-      <div class="flex justify-between text-sm text-gray-500 mb-1">
-        <span>{filled} of {total} sections complete</span>
-        <span>{pct}%</span>
+    <div className="mb-6">
+      <div className="flex justify-between text-sm mb-1.5">
+        <span className="text-gray-500">
+          <span className="font-medium text-blue-600">{filled}</span>
+          <span className="text-gray-400"> of {total} sections complete</span>
+        </span>
+        <span className="text-gray-500 font-medium">{pct}%</span>
       </div>
-      <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
         <div
-          class="h-full bg-blue-500 rounded-full transition-all duration-300"
+          className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>

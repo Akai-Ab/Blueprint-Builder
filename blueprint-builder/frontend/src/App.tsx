@@ -1,32 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Blueprint } from './types';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Builder from './pages/Builder';
-import { api } from './utils/api';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider, useToast } from './components/Toast';
+import { api, ApiError } from './utils/api';
 import { clearDraft } from './utils/storage';
 
 type View = 'dashboard' | 'builder';
 
-export default function App() {
+function AppInner() {
   const [view, setView] = useState<View>('dashboard');
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [current, setCurrent] = useState<Blueprint | undefined>();
+  const { toast } = useToast();
 
   useEffect(() => { loadBlueprints(); }, []);
 
   async function loadBlueprints() {
     try {
-      const list = await api('/api/blueprints');
+      const list = await api<Blueprint[]>('/api/blueprints', { log: 'list blueprints' });
       setBlueprints(list);
-    } catch { /* server might not be ready */ }
+    } catch (e) {
+      if (e instanceof ApiError) {
+        console.warn('[App] Failed to load blueprints, server may not be ready');
+      }
+    }
   }
 
-  function handleNew() {
+  const handleNew = useCallback(() => {
     clearDraft();
     setCurrent(undefined);
     setView('builder');
-  }
+  }, []);
 
   function handleSelect(bp: Blueprint) {
     setCurrent(bp);
@@ -37,17 +44,31 @@ export default function App() {
     try {
       if (bp.id) {
         await api(`/api/blueprints/${bp.id}`, {
-          method: 'PUT', body: JSON.stringify(bp)
+          method: 'PUT', body: JSON.stringify(bp), log: 'update blueprint'
         });
+        toast('success', 'Blueprint updated successfully');
       } else {
         await api('/api/blueprints', {
-          method: 'POST', body: JSON.stringify(bp)
+          method: 'POST', body: JSON.stringify(bp), log: 'create blueprint'
         });
+        toast('success', 'Blueprint created successfully');
       }
       clearDraft();
       await loadBlueprints();
       setView('dashboard');
-    } catch { /* silent */ }
+    } catch (e) {
+      toast('error', e instanceof ApiError ? e.message : 'Failed to save blueprint');
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await api(`/api/blueprints/${id}`, { method: 'DELETE', log: 'delete blueprint' });
+      toast('success', 'Blueprint deleted');
+      await loadBlueprints();
+    } catch (e) {
+      toast('error', e instanceof ApiError ? e.message : 'Failed to delete blueprint');
+    }
   }
 
   function handleReset() {
@@ -58,13 +79,14 @@ export default function App() {
   }
 
   return (
-    <div class="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Header bp={current || null} onReset={handleReset} />
       {view === 'dashboard' ? (
         <Dashboard
           blueprints={blueprints}
           onNew={handleNew}
           onSelect={handleSelect}
+          onDelete={handleDelete}
         />
       ) : (
         <Builder
@@ -74,5 +96,15 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <ToastProvider>
+        <AppInner />
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
