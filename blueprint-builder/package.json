@@ -1,0 +1,8 @@
+{
+  "name": "blueprint-builder",
+  "private": true,
+  "scripts": {
+    "dev": "bash start.sh",
+    "install:all": "cd frontend && npm install && cd ../backend && npm install"
+  }
+}
