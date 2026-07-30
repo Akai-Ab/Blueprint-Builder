@@ -33,6 +33,24 @@ export default function App() {
     setView('builder');
   }
 
+  async function handleDelete(id: string) {
+    try {
+      await api(`/api/blueprints/${id}`, { method: 'DELETE' });
+      await loadBlueprints();
+    } catch { /* silent */ }
+  }
+
+  async function handleDuplicate(bp: Blueprint) {
+    try {
+      const { id, createdAt, updatedAt, ...rest } = bp;
+      await api('/api/blueprints', {
+        method: 'POST',
+        body: JSON.stringify({ ...rest, name: `${rest.name} (copy)` })
+      });
+      await loadBlueprints();
+    } catch { /* silent */ }
+  }
+
   async function handleSave(bp: Blueprint) {
     try {
       if (bp.id) {
@@ -58,13 +76,15 @@ export default function App() {
   }
 
   return (
-    <div class="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Header bp={current || null} onReset={handleReset} />
       {view === 'dashboard' ? (
         <Dashboard
           blueprints={blueprints}
           onNew={handleNew}
           onSelect={handleSelect}
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
         />
       ) : (
         <Builder

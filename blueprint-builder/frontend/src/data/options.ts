@@ -171,7 +171,7 @@ export const optionDetails: Record<string, {
     description: 'Payment processing platform',
     bestFor: 'Online payments, subscriptions, marketplaces',
     advantages: ['Excellent DX', 'Global payments', 'Comprehensive docs'],
-    limitations: 'Fees per transaction, not available in all countries',
+    limitations: ['Fees per transaction', 'Not available in all countries'],
     difficulty: 'Beginner',
     popularity: 95,
     tags: ['payments', 'integrations']
